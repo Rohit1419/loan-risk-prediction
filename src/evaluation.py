@@ -28,7 +28,7 @@ class LoanModelEvaluator:
     def load_test_data(self):
         from preprocessing import LoanDataProcessor
         
-        processor = LoanDataProcessor('data/accepted_2007_to_2018Q4.csv')
+        processor = LoanDataProcessor('data/2007_to_2018Q4.csv')
         processor.handle_missing_values()
         processor.engineer_features()
         
