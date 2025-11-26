@@ -3,7 +3,6 @@ import numpy as np
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.model_selection import train_test_split
 import warnings
-<<<<<<< HEAD
 warnings.filterwarnings('ignore')
 
 class LoanDataProcessor:
@@ -48,81 +47,63 @@ class LoanDataProcessor:
                 self.df['credit_util'] = self.df['credit_util'].clip(0, 1)  # Cap at 100%
             
             # Repayment consistency (based on delinquent accounts)
-=======
-
-warnings.filterwarnings("ignore")
-
-class LoanDataProcessor:
-
-    def __init__(self, filepath):
-        print("Data Loading...")
-        self.df = pd.read_csv(filepath)
-        
-        print(f"Data loaded successfully : {self.df.shape[0]} rows , {self.df.shape[1]} columns")
-    
-    def handle_missing_values(self):
-        # dropping columns if values are less than 50%
-        missing_pct = (self.df.isnull().sum() / len(self.df)) * 100
-        cols_to_drop = missing_pct[missing_pct > 50].index.tolist()
-        self.df.drop(columns = cols_to_drop, inplace = True)
-
-        numeric_cols = self.df.select_dtypes(include = [np.number]).columns
-        self.df[numeric_cols] = self.df[numeric_cols].fillna(self.df[numeric_cols].median()) 
-
-        categorical_cols = self.df.select_dtypes(include=['object']).columns
-
-        for col in categorical_cols:
-            self.df[col] = self.df[col].fillna(self.df[col].mode()[0])
-
-        print('Missing values handled successfully')
-        return self
-
-
-    def engineer_features(self):
-        try:
-            #  income to loan ration 
-            if 'annual_inc' in self.df.columns and 'loan_amnt' in self.df.columns:
-                self.df['income_to_loan'] = self.df['annual_inc'] / (self.df['loan_amnt'] + 1)
-
-            
-            # credit utilization ratio 
-            if 'revol_bal' in self.df.columns and 'revol_credit_limit' in self.df.columns:
-                self.df['credit_util'] = self.df['revol_bal'] / (self.df['revol_credit_limit'] + 1)
-                self.df['credit_util'] = self.df['credit_util'].clip(0, 1)  # Cap at 100%
-
-            # repayment consistency
-
->>>>>>> 8e2afad8415a6a34849a58480fae602d6202a7f3
             if 'delinq_2yrs' in self.df.columns:
                 self.df['repayment_consistency'] = 1 / (self.df['delinq_2yrs'] + 1)
             
             print("✓ Features engineered")
         except Exception as e:
             print(f"⚠ Feature engineering warning: {e}")
-<<<<<<< HEAD
         
-=======
-
->>>>>>> 8e2afad8415a6a34849a58480fae602d6202a7f3
+        return self
+    
+    def create_binary_target(self, target_col='loan_status'):
+   
+        print(f"🎯 Converting {target_col} to binary target...")
+        
+        # Check unique values
+        unique_values = self.df[target_col].unique()
+        print(f"   Original categories: {len(unique_values)} unique values")
+        
+        # Define default categories (bad loans)
+        default_categories = [
+            'Charged Off', 
+            'Default', 
+            'Late (31-120 days)', 
+            'Late (16-30 days)',
+            'Does not meet the credit policy. Status:Charged Off'
+        ]
+    
+        # Create binary target
+        self.df['is_default'] = self.df[target_col].isin(default_categories).astype(int)
+        
+        # Print distribution
+        default_count = self.df['is_default'].sum()
+        total_count = len(self.df)
+        default_rate = default_count / total_count
+        
+        print(f"✅ Binary target created:")
+        print(f"   Default (1): {default_count:,} ({default_rate:.2%})")
+        print(f"   Non-Default (0): {total_count - default_count:,} ({1-default_rate:.2%})")
+        
         return self
     
     def prepare_features_target(self, target_col='loan_status', test_size=0.2, random_state=42):
         """
         Separating the features and target, encode categoricals, standardize numerics.
-        it returns X_train, X_test, y_train, y_test
+        Returns X_train, X_test, y_train, y_test, scaler
         """
         
-        # target
-        if target_col not in self.df.columns:
-            raise ValueError(f"Target column '{target_col}' not found in dataset")
+        # Convert target to binary first
+        self.create_binary_target(target_col)
         
-        y = self.df[target_col]
-        X = self.df.drop(columns=[target_col])
+        # Use binary target
+        y = self.df['is_default']
+        X = self.df.drop(columns=[target_col, 'is_default'])  # Drop both original and binary target
         
-        # Droping non-numeric, non-categorical columns
+        # Drop non-numeric, non-categorical columns
         X = X.drop(columns=[col for col in X.columns if col.lower() in ['id', 'member_id', 'url']], errors='ignore')
         
-        # separating numeric and categorical features
+        # Separate numeric and categorical features
         numeric_features = X.select_dtypes(include=[np.number]).columns.tolist()
         categorical_features = X.select_dtypes(include=['object']).columns.tolist()
         
@@ -148,28 +129,21 @@ class LoanDataProcessor:
         else:
             X = X[numeric_features]
         
-        # standardize numeric features
+        # Standardize numeric features
         scaler = StandardScaler()
         if len(numeric_features) > 0:
             X[numeric_features] = scaler.fit_transform(X[numeric_features])
         
-        # Train-test and split
+        # Train-test split
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=random_state, stratify=y)
         
         print(f"✓ Features prepared: {X_train.shape[0]} train, {X_test.shape[0]} test samples")
         print(f"  Final features: {X_train.shape[1]} total")
         
         return X_train, X_test, y_train, y_test, scaler
-
-<<<<<<< HEAD
 # Example usage
 if __name__ == "__main__":
     # NOTE: Replace with your actual dataset path
-=======
-
-if __name__ == "__main__":
-   
->>>>>>> 8e2afad8415a6a34849a58480fae602d6202a7f3
     processor = LoanDataProcessor('data/2007_to_2018Q4.csv')
     processor.handle_missing_values()
     processor.engineer_features()
