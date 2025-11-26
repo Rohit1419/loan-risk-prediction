@@ -97,6 +97,7 @@ python src/app.py
 ## Dataset
 
 - **Source:** Lending Club loan data (2007-2018)
+- **URL:** https://www.kaggle.com/datasets/wordsforthewise/lending-club/data
 - **Size:** 2.2M+ loan records
 - **Features:** 151 original features, engineered to 175+ features
 - **Target:** Binary classification (default vs non-default)
